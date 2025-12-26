@@ -1,0 +1,19 @@
+# System & Environment
+venv/
+__pycache__/
+*.py[cod]
+.env
+
+# Dependencies & Binaries
+ffmpeg/
+bin/
+*.exe
+*.zip
+*.7z
+*.vsix
+
+# Media & Temp Files
+*.mp3
+*.mp4
+*.wav
+temp_voice.mp3
