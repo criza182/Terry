@@ -25,3 +25,4 @@ schedule
 yt-dlp
 duckduckgo-search
 groq
+putergenai

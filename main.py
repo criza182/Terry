@@ -20,13 +20,14 @@ async def main_loop():
             TRIGGERS = [
                 "terry", "halo", "buka", "ingat", "jam", "waktu", "tanggal", "putar", "tolong", 
                 "siapa", "mainkan", "apa", "kenapa", "bagaimana", "gimana", "jelaskan", 
-                "cerita", "dongeng", "hibur", "harga", "berapa", "cari", "tulis", "buat"
+                "cerita", "dongeng", "hibur", "harga", "berapa", "cari", "tulis", "buat",
+                "cek", "tes", "internet", "server", "check"
             ]
             
             if any(t in command for t in TRIGGERS):
-                response = await process(command)
-                if response:
-                    await speak(response)
+                async for response_chunk in process(command):
+                    if response_chunk:
+                        await speak(response_chunk)
             else:
                 print(f"[Info] Mengabaikan '{command}' (Tidak ada kata kunci pemicu)")
         

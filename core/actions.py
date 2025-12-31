@@ -74,4 +74,130 @@ def execute_action(action_type: str, payload="") -> str:
             webbrowser.open(f"https://www.youtube.com/results?search_query={payload}")
             return f"Membuka pencarian YouTube untuk '{payload}'."
 
+    elif action_type == "get_time":
+        from datetime import datetime
+        now = datetime.now()
+        return f"Sekarang jam {now.strftime('%H:%M')}."
+
+    elif action_type == "get_date":
+        from datetime import datetime
+        import locale
+        # Coba set locale ke Indonesia kalau bisa, kalau tidak default
+        try:
+            locale.setlocale(locale.LC_TIME, 'id_ID')
+        except:
+            pass
+        now = datetime.now()
+        return f"Hari ini adalah {now.strftime('%A, %d %B %Y')}."
+
+    elif action_type == "volume_up":
+        import pyautogui
+        # Tekan tombol volume up beberapa kali agar terasa bedanya
+        pyautogui.press("volumeup", presses=5) 
+        return "Membesarkan volume."
+
+    elif action_type == "volume_down":
+        import pyautogui
+        pyautogui.press("volumedown", presses=5) 
+        return "Mengecilkan volume."
+        
+    elif action_type == "volume_mute":
+        import pyautogui
+        pyautogui.press("volumemute") 
+        return "Mematikan/Menyalakan suara."
+
+    elif action_type == "check_server":
+        import subprocess
+        import platform
+        
+        host = payload if payload else "tonykumbayer.my.id"
+        print(f"Pinging {host}...")
+        
+        # Bedakan command Windows vs Linux
+        param = '-n' if platform.system().lower()=='windows' else '-c'
+        command = ['ping', param, '1', host]
+        
+        try:
+            # Jalankan ping
+            output = subprocess.check_output(command, stderr=subprocess.STDOUT, timeout=5).decode()
+            
+            # Cek hasil (Windows: "Reply from", Linux: "bytes from")
+            if "Reply from" in output or "bytes from" in output:
+                # Coba ambil waktu ping (opsional/sederhana)
+                return f"Server {host} ONLINE! Koneksi aman."
+            else:
+                return f"Server {host} tidak merespon. Mungkin sedang down."
+        except subprocess.TimeoutExpired:
+            return f"Ping ke {host} time out (RTO)."
+        except Exception as e:
+            return f"Gagal mengecek server: {str(e)}"
+
+        except Exception as e:
+            return f"Gagal mengecek server: {str(e)}"
+
+    elif action_type == "media_play_pause":
+        import pyautogui
+        pyautogui.press("playpause")
+        return "Oke."
+        
+    elif action_type == "media_next":
+        import pyautogui
+        pyautogui.press("nexttrack")
+        return "Lagu selanjutnya."
+
+    elif action_type == "write_file":
+        import os
+        import subprocess
+        import re
+
+        # Payload format expected: "filename.txt|content"
+        # But AI is stupid, so we need to handle "content|filename.txt" or just "content"
+        try:
+            filename = "catatan_terry.txt" # Default
+            content = payload
+
+            if "|" in payload:
+                parts = payload.split("|")
+                # Heuristik: Mana yang lebih mirip nama file?
+                # Nama file biasanya pendek (< 50 char) dan tidak punya newline
+                p1 = parts[0].strip()
+                p2 = parts[-1].strip() # Ambil bagian terakhir jika split > 2
+
+                if len(p1) < 60 and "\n" not in p1 and "." in p1:
+                    filename = p1
+                    content = "|".join(parts[1:]) # Sisanya adalah konten
+                elif len(p2) < 60 and "\n" not in p2 and "." in p2:
+                    filename = p2
+                    content = "|".join(parts[:-1]) # Sisanya adalah konten
+
+            # Sanitasi Nama File (Hapus karakter dilarang Windows)
+            filename = re.sub(r'[\\/*?:"<>|]', "", filename)
+            filename = filename.replace("\n", "").strip()
+
+            # Folder kerja Terry
+            base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) 
+            work_dir = os.path.join(base_dir, "rumah")
+            
+            if not os.path.exists(work_dir):
+                os.makedirs(work_dir)
+                
+            file_path = os.path.join(work_dir, filename)
+            
+            # Tulis file
+            with open(file_path, "w", encoding="utf-8") as f:
+                f.write(content)
+                
+            # Buka file otomatis (Notepad)
+            if os.name == 'nt':
+                subprocess.Popen(['notepad.exe', file_path])
+            else: 
+                try:
+                    subprocess.Popen(['xdg-open', file_path])
+                except: pass
+
+            return f"Berhasil menulis ke '{filename}'."
+            
+        except Exception as e:
+            return f"Gagal menulis file: {e}"
+
     return "Aksi tidak dikenali."
