@@ -132,9 +132,6 @@ def execute_action(action_type: str, payload="") -> str:
         except Exception as e:
             return f"Gagal mengecek server: {str(e)}"
 
-        except Exception as e:
-            return f"Gagal mengecek server: {str(e)}"
-
     elif action_type == "media_play_pause":
         import pyautogui
         pyautogui.press("playpause")
@@ -200,4 +197,102 @@ def execute_action(action_type: str, payload="") -> str:
         except Exception as e:
             return f"Gagal menulis file: {e}"
 
+    elif action_type == "generate_image":
+        import requests
+        import os
+        import subprocess
+        
+        try:
+            prompt_encoded = payload.replace(" ", "%20")
+            url = f"https://image.pollinations.ai/prompt/{prompt_encoded}"
+            
+            # Setup path
+            base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) 
+            gallery_dir = os.path.join(base_dir, "rumah", "galeri")
+            if not os.path.exists(gallery_dir): os.makedirs(gallery_dir)
+            
+            filename = f"img_{int(time.time())}.jpg"
+            file_path = os.path.join(gallery_dir, filename)
+            
+            print(f"Generating image (Pollinations): {payload}...")
+            response = requests.get(url, timeout=20)
+            if response.status_code == 200:
+                with open(file_path, 'wb') as f:
+                    f.write(response.content)
+                
+                # Open image
+                if os.name == 'nt':
+                    try: subprocess.Popen(['start', file_path], shell=True)
+                    except: pass
+                
+                return f"Gambar '{payload}' berhasil dibuat."
+            else:
+                raise Exception("Pollinations API failed")
+                
+        except Exception as e:
+            print(f"Pollinations Error: {e}, mencoba backup Hugging Face...")
+            return generate_image_hf(payload, gallery_dir, filename)
+
+    elif action_type == "capture_web":
+        import pyautogui
+        import webbrowser
+        import os
+        import subprocess
+        
+        try:
+            url = payload
+            if not url.startswith("http"): url = "https://" + url
+            
+            print(f"Capturing web: {url}...")
+            webbrowser.open(url)
+            time.sleep(5) # Wait for page load
+            
+            base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) 
+            ss_dir = os.path.join(base_dir, "rumah", "screenshots")
+            if not os.path.exists(ss_dir): os.makedirs(ss_dir)
+            
+            filename = f"ss_{int(time.time())}.png"
+            file_path = os.path.join(ss_dir, filename)
+            
+            pyautogui.screenshot(file_path)
+            
+            if os.name == 'nt':
+                try: subprocess.Popen(['start', file_path], shell=True)
+                except: pass
+                
+            return f"Screenshot website berhasil disimpan."
+        except Exception as e:
+            return f"Gagal screenshot: {e}"
+
     return "Aksi tidak dikenali."
+
+def generate_image_hf(prompt, folder, filename):
+    import requests
+    import os
+    import subprocess
+    from dotenv import load_dotenv
+    load_dotenv()
+    
+    token = os.getenv("HF_TOKEN")
+    if not token:
+        return "Gagal: Pollinations error dan HF_TOKEN tidak ditemukan di .env."
+        
+    API_URL = "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0"
+    headers = {"Authorization": f"Bearer {token}"}
+    
+    try:
+        response = requests.post(API_URL, headers=headers, json={"inputs": prompt})
+        if response.status_code == 200:
+            file_path = os.path.join(folder, filename)
+            with open(file_path, "wb") as f:
+                f.write(response.content)
+                
+            if os.name == 'nt':
+                try: subprocess.Popen(['start', file_path], shell=True)
+                except: pass
+            
+            return f"Gambar '{prompt}' berhasil dibuat (Backup HF)."
+        else:
+            return f"Gagal backup HF: {response.text}"
+    except Exception as e:
+        return f"Gagal total: {e}"

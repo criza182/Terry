@@ -7,7 +7,7 @@ import random
 import platform
 import subprocess
 import ctypes
-import os
+from core.shared import log
 
 # Detect OS
 IS_WINDOWS = platform.system() == "Windows"
@@ -31,7 +31,7 @@ def play_audio_cross_platform(filename):
         try:
             subprocess.run(["ffplay", "-nodisp", "-autoexit", "-loglevel", "quiet", file_path], check=True)
         except Exception as e:
-            print(f"[Audio] Error playing on Linux: {e}")
+            log(f"[Audio] Error playing on Linux: {e}")
 
 recognizer = sr.Recognizer()
 recognizer.energy_threshold = 300 
@@ -52,7 +52,7 @@ async def _audio_worker():
             loop = asyncio.get_event_loop()
             await loop.run_in_executor(None, play_audio_cross_platform, filename)
         except Exception as e:
-            print(f"[Audio Worker] Error: {e}")
+            log(f"[Audio Worker] Error: {e}")
         finally:
             if os.path.exists(filename):
                 try:
@@ -70,7 +70,7 @@ async def speak(text: str):
     if _worker_task is None or _worker_task.done():
         _worker_task = asyncio.create_task(_audio_worker())
 
-    print(f"Terry: {text}")
+    log(f"Terry: {text}")
     
     filename = f"tts_{int(time.time())}_{random.randint(100,999)}.mp3"
     
@@ -83,7 +83,7 @@ async def speak(text: str):
         await _audio_queue.put(filename)
             
     except Exception as e:
-        print(f"[Audio] Error generating: {e}")
+        log(f"[Audio] Error generating: {e}")
         if os.path.exists(filename):
             try: os.remove(filename)
             except: pass
@@ -102,7 +102,7 @@ async def listen() -> str:
     with mic as source:
         try:
             if not is_calibrated:
-                print("[Mic] Kalibrasi... (Hening sejenak)")
+                log("[Mic] Kalibrasi... (Hening sejenak)")
                 recognizer.adjust_for_ambient_noise(source, duration=1)
                 is_calibrated = True
             
@@ -117,5 +117,5 @@ async def listen() -> str:
         except sr.UnknownValueError:
             return ""
         except Exception as e:
-            print(f"[Mic] Error: {e}")
+            log(f"[Mic] Error: {e}")
             return ""

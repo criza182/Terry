@@ -14,7 +14,7 @@ edge-tts
 pygame
 
 # AI/LLM
-google-generativeai
+google-genai
 openai
 
 # System/Tools

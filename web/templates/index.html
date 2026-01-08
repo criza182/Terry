@@ -1,59 +1,73 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Terry AI Dashboard</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #121212;
-            color: #e0e0e0;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        h1 { color: #bb86fc; }
-        .card {
-            background-color: #1e1e1e;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-            width: 80%;
-            max-width: 600px;
-            text-align: center;
-        }
-        .status {
-            font-size: 1.2em;
-            margin: 10px 0;
-        }
-        .online { color: #03dac6; }
-        .log-box {
-            background-color: #000;
-            color: #0f0;
-            font-family: monospace;
-            padding: 10px;
-            border-radius: 5px;
-            height: 200px;
-            overflow-y: scroll;
-            margin-top: 20px;
-            text-align: left;
-        }
-    </style>
+    <title>Terry AI</title>
+    <link rel="stylesheet" href="/static/style.css">
 </head>
+
 <body>
-    <h1>Terry AI Assistant</h1>
-    <div class="card">
-        <div class="status">Status: <span class="online">{{ status }}</span></div>
-        <p>Terry sedang berjalan di latar belakang.</p>
-        <p>Katakan "OK Terry" atau langsung bicara padanya.</p>
-        
-        <div class="log-box" id="logs">
-            [System] Terry initializing...<br>
-            [System] Web Dashboard online.
-        </div>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside id="sidebar">
+            <div class="sidebar-header">
+                Settings
+            </div>
+            <div style="padding: 10px; border-bottom: 1px solid #333;">
+                <label for="model-select"
+                    style="display:block; font-size: 0.8rem; margin-bottom:5px; color:#aaa;">Perplexity Model:</label>
+                <select id="model-select"
+                    style="width:100%; background:#333; color:white; border:none; padding:5px; border-radius:4px;">
+                    <option value="sonar">Sonar (Default)</option>
+                    <option value="sonar-pro">Sonar Pro</option>
+                </select>
+            </div>
+            <div class="sidebar-header">
+                Terminal Info
+            </div>
+            <div id="terminal-logs">
+                <div class="log-entry">[System] Connecting...</div>
+            </div>
+        </aside>
+        <div id="resizer"></div>
+
+        <!-- Main Chat Area -->
+        <main id="main-area">
+            <header>
+                <div>Terry AI</div>
+                <div class="status-container">
+                    <span id="model-badge" class="badge">Model: Loading...</span>
+                    <span class="status-indicator">Online</span>
+                </div>
+            </header>
+
+            <div id="chat-container">
+                <!-- Intro Message -->
+                <div class="message-row ai">
+                    <div class="message-content">
+                        <div class="avatar ai">T</div>
+                        <div class="text">Halo! Saya Terry. Ada yang bisa saya bantu?</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="input-area">
+                <div id="input-box-container">
+                    <textarea id="message-input" rows="1" placeholder="Ketik pesan ke Terry..."></textarea>
+                    <button id="send-btn">
+                        <!-- SVG Icon Send -->
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M2.01 21L23 12L2.01 3L2 10L17 12L2 14L2.01 21Z" fill="currentColor" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </main>
     </div>
+
+    <script src="/static/script.js"></script>
 </body>
+
 </html>
