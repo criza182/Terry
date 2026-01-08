@@ -5,6 +5,9 @@ Terry adalah asisten AI berbasis suara dan teks yang dirancang untuk Windows dan
 ![Status](https://img.shields.io/badge/Status-Active-success)
 ![Python](https://img.shields.io/badge/Python-3.10+-blue)
 ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux-lightgrey)
+![GitHub](https://img.shields.io/badge/GitHub-Repository-blue?logo=github)
+
+**🔗 Repository**: [https://github.com/criza182/Terry.git](https://github.com/criza182/Terry.git)
 
 ---
 
@@ -64,9 +67,16 @@ sudo apt install ffmpeg
 
 ## 🚀 Instalasi
 
+### **Clone Repository**
+
+```bash
+git clone https://github.com/criza182/Terry.git
+cd Terry
+```
+
 ### **Windows**
 
-1. **Download/Clone** folder proyek ini
+1. **Download/Clone** folder proyek ini (atau gunakan perintah di atas)
 2. **Jalankan script setup**:
    ```bat
    start_terry.bat
@@ -354,10 +364,12 @@ Aplikasi ini menggunakan berbagai library open-source. Pastikan untuk mematuhi l
 ## 🤝 Kontribusi
 
 Kontribusi sangat diterima! Jika menemukan bug atau ingin menambah fitur:
-1. Buat issue di GitHub repository
-2. Fork repository
+1. Buat [issue](https://github.com/criza182/Terry/issues) di GitHub repository
+2. [Fork repository](https://github.com/criza182/Terry/fork)
 3. Buat branch untuk fitur baru
 4. Submit pull request
+
+**Repository**: [https://github.com/criza182/Terry](https://github.com/criza182/Terry)
 
 ---
 
