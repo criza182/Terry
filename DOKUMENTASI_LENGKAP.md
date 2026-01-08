@@ -2,7 +2,9 @@
 
 ## 🎯 Ringkasan Aplikasi
 
-**Terry** adalah asisten AI berbasis suara dan teks yang dirancang untuk Windows dan Linux. Aplikasi ini menggabungkan teknologi speech recognition, text-to-speech, dan multiple AI providers untuk memberikan pengalaman interaksi yang natural dan responsif.
+**Terry** adalah asisten AI berbasis suara dan teks yang dirancang untuk Windows dan Linux. 
+Aplikasi ini menggabungkan teknologi speech recognition, text-to-speech, 
+dan multiple AI providers untuk memberikan pengalaman interaksi yang natural dan responsif.
 
 ---
 
