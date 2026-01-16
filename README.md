@@ -113,6 +113,10 @@ GEMINI_API_KEY=your_gemini_key_here
 GEMINI_API_KEY_2=backup_key_1
 GEMINI_API_KEY_3=backup_key_2
 
+# OpenRouter (Opsional - Banyak Model Gratis)
+OPENROUTER_API_KEY=your_openrouter_key
+OPENROUTER_MODEL=google/gemini-2.0-flash-exp:free
+
 # Perplexity (Opsional)
 PERPLEXITY_API_KEY=your_perplexity_key
 PERPLEXITY_API_KEY_2=backup_key_1
@@ -135,6 +139,7 @@ HF_TOKEN=your_huggingface_token
 ### **Cara Mendapatkan API Keys**
 
 - **Gemini**: [Google AI Studio](https://aistudio.google.com/) (Gratis)
+- **OpenRouter**: [OpenRouter.ai](https://openrouter.ai/) (Ada model gratis)
 - **Perplexity**: [Perplexity Console](https://www.perplexity.ai/settings/api) (Berbayar)
 - **Groq**: [Groq Console](https://console.groq.com/) (Gratis dengan limit)
 - **DeepSeek**: [DeepSeek Platform](https://platform.deepseek.com/) (Berbayar)
