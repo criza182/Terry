@@ -4,29 +4,33 @@ Berikut adalah daftar lengkap layanan AI yang terintegrasi di dalam Terry saat i
 
 ## 1. Otak Utama (Thinking AI)
 Urutan prioritas Terry dalam memilih otak:
-1.  **Google Gemini** (Model: `gemini-2.5-flash`, `gemini-3-flash`, `gemini-2.0-flash`, dll)
-    -   Status: ✅ AKTIF (Auto-Fallback).
-    -   Fungsi: Otak utama. Terry akan otomatis mencari versi Gemini yang tersedia.
-    -   Update: Menggunakan logika deteksi otomatis untuk menghindari error 404.
-2.  **Perplexity AI** (Model: `sonar`, `sonar-pro`)
+1.  **Google Gemini** (Auto-Discovery)
+    -   Status: ✅ AKTIF (Auto-Update).
+    -   Fungsi: Otak utama. Terry otomatis mendeteksi model terbaru (2.5, 3.0, dll).
+    -   Update: Smart Fallback.
+2.  **OpenRouter** (Auto-Discovery)
+    -   Status: ✅ AKTIF (Model Gratis).
+    -   Fungsi: Mengambil daftar model gratis dari OpenRouter secara otomatis.
+3.  **Perplexity AI** (Model: `sonar`, `sonar-pro`)
     -   Status: ✅ AKTIF (Jika API Key ada).
     -   Fungsi: Riset mendalam, berita terkini, dan akses data real-time.
-    -   Warning: Model `sonar-reasoning` sudah tidak tersedia (deprecated).
-3.  **DeepSeek** (Model: `deepseek-chat`)
-    -   Status: ⚠️ ERROR (Perlu Saldo/Top-up).
-    -   Fungsi: Otak cadangan jika Gemini & Perplexity mati.
-5.  **Ollama (Local AI)** (Model: `llama3.2`, `deepseek-r1:7b`)
-    -   Status: ✅ AKTIF (Local - Offline).
-    -   Fungsi: Otak lokal tanpa internet & kuota (100% Gratis).
-    -   Kelebihan: Sangat cepat (Llama 3.2) & Cerdas (DeepSeek).
-6.  **Google Search** (Fallback Terakhir)
+4.  **Groq** (Auto-Discovery)
     -   Status: ✅ AKTIF.
-    -   Fungsi: Jika semua AI mati (termasuk lokal), Terry akan membuka browser Google Search.
+    -   Fungsi: Otomatis mendeteksi model Llama/Mixtral terbaru.
+5.  **DeepSeek** (Model: `deepseek-chat`)
+    -   Status: ⚠️ ERROR (Perlu Saldo/Top-up).
+6.  **Ollama (Local AI)** (Auto-Discovery)
+    -   Status: ✅ AKTIF (Offline).
+    -   Fungsi: Mendeteksi model lokal otomatis.
+7.  **Google Search** (Fallback Terakhir)
+    -   Status: ✅ AKTIF.
+    -   Fungsi: Fallback terakhir.
 
 ## 2. Visual & Mata (Image & Vision)
 1.  **Pollinations AI**
     -   Status: ✅ AKTIF (Gratis).
     -   Fungsi: Membuat gambar (Text-to-Image) tanpa login.
+    -   Output: **Image Popup** (Muncul otomatis di layar).
     -   Trigger: "Buatkan gambar...", "Lukiskan..."
 2.  **Hugging Face Inference API**
     -   Status: ✅ SIAP (Backup).

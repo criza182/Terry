@@ -15,13 +15,14 @@ dan multiple AI providers untuk memberikan pengalaman interaksi yang natural dan
 - **Text-to-Speech**: Mengkonversi respons AI menjadi suara menggunakan Microsoft Edge TTS (Bahasa Indonesia)
 - **Wake Word Detection**: Mengaktifkan dengan kata pemicu seperti "Terry", "Halo", "Buka", dll.
 
-### 2. **Multi-Provider AI Brain**
-Aplikasi mendukung multiple AI providers dengan fallback otomatis:
-- **Google Gemini** (Prioritas 1): `gemini-2.0-flash`, `gemini-1.5-flash`, dll.
-- **Perplexity AI**: `sonar`, `sonar-pro` (dengan konfigurasi via web dashboard)
-- **DeepSeek Chat**: Alternatif AI provider
-- **Groq (Llama 3)**: Model Llama 3.3-70B
-- **Ollama (Local)**: Untuk menjalankan model lokal tanpa internet
+### 2. **Auto-Update AI Brain**
+Aplikasi mendukung **Auto-Discovery** untuk mendeteksi model terbaru secara otomatis:
+- **Google Gemini** (Prioritas 1): Otomatis mendeteksi model `gemini-*` terbaru.
+- **OpenRouter** (Prioritas 2): Otomatis mengambil daftar model gratis (Free Tier).
+- **Perplexity AI**: `sonar`, `sonar-pro` (Manual config).
+- **DeepSeek Chat**: Alternatif AI provider.
+- **Groq**: Otomatis mendeteksi model (Llama 3, Mixtral, dll).
+- **Ollama (Local)**: Otomatis mendeteksi model yang terinstall (`ollama list`).
 - **Fallback**: Google Search jika semua provider gagal
 
 ### 3. **Sistem Aksi Lokal (Local Actions)**
@@ -36,7 +37,7 @@ Aksi yang dieksekusi tanpa menggunakan AI (hemat kuota & cepat):
 - **Internet Speed Test**: `"Tes internet"` - Membuka fast.com
 
 ### 4. **Fitur Visual**
-- **Generate Image**: `"Buatkan gambar [deskripsi]"` - Menggunakan Pollinations.ai atau Hugging Face
+- **Generate Image**: `"Buatkan gambar [deskripsi]"` - Generate gambar dan tampilkan di overlay popup (bukan buka app foto).
 - **Web Screenshot**: `"Screenshot [url]"` - Menangkap layar website
 
 ### 5. **Pencarian Internet**
@@ -213,7 +214,7 @@ Aplikasi dapat berjalan dengan beberapa kombinasi API keys:
 #### **Langkah 2: Install FFmpeg**
 
 **Opsi A: Otomatis (Recommended)**
-1. Jalankan `start_terry.bat`
+1. Jalankan `start_terry.bat` (Shortcut ke `app_standalone.py`)
 2. Jika FFmpeg tidak ditemukan, script akan menawarkan download otomatis
 3. Pilih `Y` untuk download
 
@@ -333,11 +334,11 @@ python main.py
    ```bash
    # Windows
    venv\Scripts\activate
-   python main.py
+   python app_standalone.py
    
    # Linux
    source venv/bin/activate
-   python main.py
+   python app_standalone.py
    ```
 
 ### **Interface**
