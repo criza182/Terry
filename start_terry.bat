@@ -36,5 +36,6 @@ exit /b
 :Run
 
 call venv\Scripts\activate
-python main.py
+:: python main.py
+python app_standalone.py
 pause

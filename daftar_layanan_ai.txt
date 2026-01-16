@@ -4,7 +4,7 @@ Berikut adalah daftar lengkap layanan AI yang terintegrasi di dalam Terry saat i
 
 ## 1. Otak Utama (Thinking AI)
 Urutan prioritas Terry dalam memilih otak:
-1.  **Google Gemini** (Model: `gemini-2.0-flash`, `gemini-1.5-flash`, atau `gemini-2.5-flash`)
+1.  **Google Gemini** (Model: `gemini-2.5-flash`, `gemini-3-flash`, `gemini-2.0-flash`, dll)
     -   Status: ✅ AKTIF (Auto-Fallback).
     -   Fungsi: Otak utama. Terry akan otomatis mencari versi Gemini yang tersedia.
     -   Update: Menggunakan logika deteksi otomatis untuk menghindari error 404.

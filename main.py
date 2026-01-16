@@ -29,21 +29,22 @@ async def main_loop():
         if command:
             log(f"Mendengar: {command}") # Log
             
-            # Daftar kata pemicu diperluas (Lebih Sensitif)
-            TRIGGERS = [
-                "terry", "halo", "buka", "ingat", "jam", "waktu", "tanggal", "putar", "tolong", 
-                "siapa", "mainkan", "apa", "kenapa", "bagaimana", "gimana", "jelaskan", 
-                "cerita", "dongeng", "hibur", "harga", "berapa", "cari", "tulis", "buat",
-                "cek", "tes", "internet", "server", "check"
-            ]
+            from core.shared import state
+            state.status = "thinking"
+            log("Terry sedang berpikir...")
             
-            if any(t in command for t in TRIGGERS):
-                log("Processing command...")
+            # Daftar kata pemicu diperluas (Lebih Sensitif)
+            # Trigger Check REMOVED for easier interaction
+            # if any(t in command for t in TRIGGERS):
+            if True: # Always process
                 async for response_chunk in process(command):
                     if response_chunk:
+                        state.status = "speaking"
                         await speak(response_chunk)
-            else:
-                log(f"[Info] Mengabaikan '{command}' (Tidak ada kata kunci pemicu)") # Log
+            
+            state.status = "idle"
+            # else:
+            #     log(f"[Info] Mengabaikan '{command}' (Tidak ada kata kunci pemicu)") # Log
         
         schedule.run_pending()
         await asyncio.sleep(0.01)

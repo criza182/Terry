@@ -37,7 +37,8 @@ recognizer = sr.Recognizer()
 recognizer.energy_threshold = 300 
 recognizer.dynamic_energy_threshold = True
 
-mic = sr.Microphone()
+mic = None # Deprecated (Replaced by SoundDevice)
+
 VOICE = "id-ID-GadisNeural"
 
 # Audio Queue and Worker
@@ -91,31 +92,81 @@ async def speak(text: str):
 # Flag untuk kalibrasi sekali saja
 is_calibrated = False
 
-async def listen() -> str:
-    """Mendengarkan input suara, menunggu sampai Terry selesai bicara."""
-    global is_calibrated
-    
-    # Tunggu sampai Terry selesai bicara (Antrean kosong)
-    if _audio_queue.qsize() > 0:
-        await _audio_queue.join()
+# --- ALTERNATIVE MICROPHONE (SoundDevice) ---
+try:
+    import sounddevice as sd
+    import numpy as np
+    import scipy.io.wavfile as wav
+    HAS_SD = True
+except ImportError:
+    HAS_SD = False
+    log("[Voice] SoundDevice/Numpy not found. Install: pip install sounddevice numpy scipy")
 
-    with mic as source:
+async def listen() -> str:
+    """Mendengarkan input suara menggunakan SoundDevice dengan deteksi aktivitas sederhana."""
+    global is_calibrated
+    from core.shared import state 
+    
+    if not HAS_SD:
+        await asyncio.sleep(2)
+        return ""
+        
+    if not state.voice_enabled:
+        await asyncio.sleep(1)
+        return ""
+
+    if _audio_queue.qsize() > 0:
+        log(f"[Audio] Menunggu {_audio_queue.qsize()} pesan suara selesai...")
         try:
-            if not is_calibrated:
-                log("[Mic] Kalibrasi... (Hening sejenak)")
-                recognizer.adjust_for_ambient_noise(source, duration=1)
-                is_calibrated = True
-            
-            print("Mendengarkan...", end="\r")
-            
-            audio = recognizer.listen(source, timeout=5, phrase_time_limit=10)
-            text = recognizer.recognize_google(audio, language="id-ID")
-            return text.lower()
-            
-        except sr.WaitTimeoutError:
+            # Beri timeout 10 detik agar tidak hang selamanya jika driver audio bermasalah
+            await asyncio.wait_for(_audio_queue.join(), timeout=10.0)
+        except asyncio.TimeoutError:
+            log("[Audio] Timeout menunggu suara selesai. Melanjutkan pendengaran...")
+            # Bersihkan queue jika macet
+            while not _audio_queue.empty():
+                try: _audio_queue.get_nowait(); _audio_queue.task_done()
+                except: pass
+
+    log("Mendengarkan...")
+    state.status = "listening"
+    
+    fs = 44100  
+    duration = 5 # Tetap 5 detik namun kita bisa optimalkan nanti
+    
+    try:
+        # Rekam audio
+        recording = sd.rec(int(duration * fs), samplerate=fs, channels=1, dtype='int16')
+        sd.wait() 
+        state.status = "thinking"
+        
+        # Cek Volume
+        rms = np.sqrt(np.mean(recording.astype(np.float32)**2))
+        log(f"[Mic] Level: {rms:.1f}")
+        
+        # Jika terlalu sunyi, langsung skip tanpa tanya Google (Hemat kuota/waktu)
+        if rms < 150:
+            state.status = "idle"
             return ""
+            
+        audio_data = sr.AudioData(recording.tobytes(), fs, 2)
+        
+        log("[Mic] Sedang menerjemahkan suara...")
+        try:
+            # Gunakan timeout singkat untuk recognizer jika memungkinkan
+            text = recognizer.recognize_google(audio_data, language="id-ID")
+            if text:
+                log(f"[Mic] Hasil: {text}")
+                return text.lower()
         except sr.UnknownValueError:
             return ""
-        except Exception as e:
-            log(f"[Mic] Error: {e}")
+        except sr.RequestError as e:
+            log(f"[Mic] Google Error (Cek Internet): {e}")
             return ""
+        finally:
+            state.status = "idle"
+            
+    except Exception as e:
+        log(f"[Mic] Hardware Error: {e}")
+        state.status = "idle"
+        return ""
+    return ""

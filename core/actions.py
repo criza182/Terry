@@ -1,6 +1,9 @@
 import schedule
 import time
+import requests
+from bs4 import BeautifulSoup
 from AppOpener import open as app_opener
+from core.shared import log
 
 def reminder_job(message: str):
     print(f"\n[PENGINGAT] TERRY: {message}")
@@ -19,8 +22,21 @@ def execute_action(action_type: str, payload="") -> str:
             if any(ext in payload for ext in [".com", ".id", ".net", ".org", "http"]):
                 if not payload.startswith("http"):
                     payload = "https://" + payload
-                webbrowser.open(payload)
-                return f"Membuka website {payload}."
+                
+                # List of sites known to block iframes (X-Frame-Options: SAMEORIGIN/DENY)
+                protected_sites = ["google.com", "facebook.com", "twitter.com", "instagram.com", "github.com"]
+                is_protected = any(site in payload.lower() for site in protected_sites)
+                
+                from core.shared import state
+                if is_protected:
+                    import webbrowser
+                    webbrowser.open(payload)
+                    return f"Membuka {payload} di browser eksternal karena situs ini melarang frame internal untuk keamanan."
+                
+                state.url_to_open = payload
+                return f"Membuka website {payload} di mini window HUD."
+
+
             else:
                 app_opener(payload, match_closest=True)
                 return f"Membuka {payload}."
@@ -58,12 +74,52 @@ def execute_action(action_type: str, payload="") -> str:
             cmd = f'{yt_dlp_path} "ytsearch1:{payload}" --get-id --skip-download'
             
             # Run command
-            result = subprocess.check_output(cmd, shell=True).decode('utf-8').strip()
+            # Run command with real-time logging
+            from core.shared import state
+            
+            process = subprocess.Popen(
+                cmd, 
+                shell=True, 
+                stdout=subprocess.PIPE, 
+                stderr=subprocess.PIPE, 
+                text=True,
+                encoding='utf-8',
+                errors='replace'
+            )
+            
+            result = ""
+            
+            # Stream stdout
+            while True:
+                line = process.stdout.readline()
+                if not line and process.poll() is not None:
+                    break
+                if line:
+                    clean_line = line.strip()
+                    if clean_line:
+                        state.add_log(f"[YouTube] {clean_line}")
+                        result += clean_line 
+                        
+            # Capture stderr (warnings)
+            stderr_output = process.stderr.read()
+            if stderr_output:
+                for err_line in stderr_output.splitlines():
+                    if err_line.strip():
+                        state.add_log(f"[YouTube WARNING] {err_line.strip()}")
+            
+            result = result.strip()
             
             if result:
-                video_url = f"https://www.youtube.com/watch?v={result}"
-                webbrowser.open(video_url)
-                return f"Memutar '{payload}' di YouTube."
+                # Ambil baris pertama saja jika ada multi-line (antisipasi garbage)
+                video_id = result.split('\n')[0].strip()
+                video_url = f"https://www.youtube.com/embed/{video_id}?autoplay=1&mute=0"
+                
+                from core.shared import state
+                state.url_to_open = video_url
+                state.add_log(f"[DEBUG] Setting URL: {video_url}") # Debug Log
+                
+                return f"Memutar '{payload}' di mini window YouTube."
+
             else:
                 # Fallback jika ID tidak ketemu
                 webbrowser.open(f"https://www.youtube.com/results?search_query={payload}")
@@ -220,12 +276,18 @@ def execute_action(action_type: str, payload="") -> str:
                 with open(file_path, 'wb') as f:
                     f.write(response.content)
                 
-                # Open image
-                if os.name == 'nt':
-                    try: subprocess.Popen(['start', file_path], shell=True)
-                    except: pass
+                # Trigger Frontend Popup
+                from core.shared import state
+                # Path relative to 'rumah' which is mounted as /media
+                state.image_to_show = f"/media/galeri/{filename}"
+                print(f"[Actions] Image generated. Triggering popup: {state.image_to_show}")
                 
-                return f"Gambar '{payload}' berhasil dibuat."
+                # Disable external viewer for now
+                # if os.name == 'nt':
+                #     try: subprocess.Popen(['start', file_path], shell=True)
+                #     except: pass
+                
+                return f"Gambar '{payload}' berhasil dibuat. Cek layar."
             else:
                 raise Exception("Pollinations API failed")
                 
@@ -287,12 +349,38 @@ def generate_image_hf(prompt, folder, filename):
             with open(file_path, "wb") as f:
                 f.write(response.content)
                 
-            if os.name == 'nt':
-                try: subprocess.Popen(['start', file_path], shell=True)
-                except: pass
+            # Trigger Frontend Popup
+            from core.shared import state
+            state.image_to_show = f"/media/galeri/{filename}"
+            
+            # if os.name == 'nt':
+            #     try: subprocess.Popen(['start', file_path], shell=True)
+            #     except: pass
             
             return f"Gambar '{prompt}' berhasil dibuat (Backup HF)."
         else:
             return f"Gagal backup HF: {response.text}"
     except Exception as e:
         return f"Gagal total: {e}"
+
+def scrape_web(url):
+    """Membaca konten teks dari website untuk diringkas oleh AI."""
+    if not url.startswith("http"):
+        url = "https://" + url
+    try:
+        log(f"[Action] Scraping content from: {url}")
+        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
+        response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status()
+        
+        soup = BeautifulSoup(response.text, 'html.parser')
+        
+        # Hapus elemen yang tidak perlu
+        for script in soup(["script", "style", "nav", "footer", "header"]):
+            script.extract()
+            
+        text = soup.get_text(separator=' ', strip=True)
+        # Limit text size for AI prompt
+        return text[:5000]
+    except Exception as e:
+        return f"Gagal membaca website: {e}"

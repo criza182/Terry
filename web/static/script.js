@@ -1,183 +1,293 @@
 const chatContainer = document.getElementById('chat-container');
+const terminalLogs = document.getElementById('terminal-logs');
+const terminalLogsBottom = document.getElementById('terminal-logs-bottom');
 const messageInput = document.getElementById('message-input');
 const sendBtn = document.getElementById('send-btn');
-const terminalLogs = document.getElementById('terminal-logs');
-const modelBadge = document.getElementById('model-badge');
-const modelSelect = document.getElementById('model-select');
+// const modelBadge = document.getElementById('model-badge');
+const micStatus = document.getElementById('mic-status');
 
-// --- Sidebar Resizer Logic ---
-const sidebar = document.getElementById('sidebar');
-const resizer = document.getElementById('resizer');
+const browserWindow = document.getElementById('browser-window');
+const browserIframe = document.getElementById('browser-iframe');
+const closeBrowserBtn = document.getElementById('close-browser-btn');
+const openExternalBtn = document.getElementById('open-external-btn');
 
-// Restore saved width
-const savedWidth = localStorage.getItem('sidebarWidth');
-if (savedWidth) {
-    sidebar.style.width = savedWidth + 'px';
-}
+const imagePopup = document.getElementById('image-popup');
+const popupImg = document.getElementById('popup-img');
+const closeImageBtn = document.getElementById('close-image-btn');
+const openImageBtn = document.getElementById('open-image-btn');
 
-resizer.addEventListener('mousedown', function (e) {
-    e.preventDefault();
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', stopResizing);
-    resizer.classList.add('resizing');
-});
+function addLog(msg) {
+    const time = new Date().toLocaleTimeString();
+    const entry = document.createElement('div');
+    entry.className = 'log-entry';
+    entry.innerHTML = `<span class="log-time">[${time}]</span> ${msg}`;
+    terminalLogs.appendChild(entry);
+    terminalLogs.scrollTop = terminalLogs.scrollHeight;
 
-function handleMouseMove(e) {
-    const newWidth = e.clientX;
-    if (newWidth > 150 && newWidth < window.innerWidth * 0.8) {
-        sidebar.style.width = newWidth + 'px';
-        localStorage.setItem('sidebarWidth', newWidth);
+    // Mirror to Bottom Terminal if it exists
+    if (typeof terminalLogsBottom !== 'undefined' && terminalLogsBottom) {
+        const entryBottom = entry.cloneNode(true);
+        terminalLogsBottom.appendChild(entryBottom);
+        terminalLogsBottom.scrollTop = terminalLogsBottom.scrollHeight;
     }
 }
 
-function stopResizing() {
-    document.removeEventListener('mousemove', handleMouseMove);
-    document.removeEventListener('mouseup', stopResizing);
-    resizer.classList.remove('resizing');
+function addMessage(sender, text, isAI = false) {
+    const msgDiv = document.createElement('div');
+    msgDiv.className = `msg ${isAI ? 'ai-msg' : 'user-msg'}`;
+    msgDiv.innerHTML = `<span class="prefix">${sender}:</span> <span class="text">${text}</span>`;
+    chatContainer.appendChild(msgDiv);
+    chatContainer.scrollTop = chatContainer.scrollHeight;
 }
 
-// --- Settings Logic ---
-modelSelect.addEventListener('change', async function () {
-    const selectedModel = this.value;
-    try {
-        await fetch('/api/settings', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ model_name: selectedModel })
-        });
-        console.log("Model changed to:", selectedModel);
-    } catch (err) {
-        console.error("Failed to change settings:", err);
+async function sendMessage() {
+    const text = messageInput.value.trim();
+    if (!text) return;
+
+    addMessage('YOU', text, false);
+    messageInput.value = '';
+    messageInput.style.height = 'auto';
+
+    addLog(`INITIATING COMMAND: ${text}`);
+
+    const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: text })
+    });
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let aiMsgDiv = null;
+    let fullText = "";
+
+    while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        if (!aiMsgDiv) {
+            aiMsgDiv = document.createElement('div');
+            aiMsgDiv.className = 'msg ai-msg';
+            aiMsgDiv.innerHTML = `<span class="prefix">TERRY:</span> <span class="text"></span>`;
+            chatContainer.appendChild(aiMsgDiv);
+        }
+
+        fullText += chunk;
+        aiMsgDiv.querySelector('.text').innerText = fullText;
+        chatContainer.scrollTop = chatContainer.scrollHeight;
     }
-});
+}
 
-// Auto-resize textarea
-messageInput.addEventListener('input', function () {
-    this.style.height = 'auto';
-    this.style.height = (this.scrollHeight) + 'px';
-});
-
-// Submit on Enter (Shift+Enter for new line)
-messageInput.addEventListener('keydown', function (e) {
+sendBtn.addEventListener('click', sendMessage);
+messageInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
         sendMessage();
     }
 });
 
-sendBtn.addEventListener('click', sendMessage);
-
-// --- Polling for Status & Logs ---
+// Update Status from Server
 async function fetchUpdates() {
     try {
         const response = await fetch('/api/update');
         const data = await response.json();
 
-        // 1. Update Model
-        if (data.model) {
-            modelBadge.innerText = `Model: ${data.model}`;
+        // if (data.model) {
+        //    modelBadge.innerText = `MODEL: ${data.model.toUpperCase()}`;
+        // }
+
+
+        // Update Voice Status Toggle (Visual only)
+        document.getElementById('voice-status').innerText = data.voice_enabled ? "ON" : "OFF";
+        document.getElementById('voice-status').className = data.voice_enabled ? "status-tag" : "status-tag off";
+
+        // --- UPDATE AVATAR STATUS ---
+        const avatar = document.getElementById('reactor-core');
+        if (avatar) {
+            avatar.classList.remove('idle', 'thinking', 'speaking');
+            avatar.classList.add(data.status || 'idle');
         }
 
-        // 1b. Sync Dropdown (if exists and value differs)
-        if (data.perplexity_model && modelSelect.value !== data.perplexity_model) {
-            // Only update if not currently focused (to avoid annoying jumps while selecting)
-            if (document.activeElement !== modelSelect) {
-                modelSelect.value = data.perplexity_model;
+        if (data.system_stats) {
+            document.getElementById('sys-os').innerText = data.system_stats.os;
+            document.getElementById('sys-cpu-model').innerText = data.system_stats.processor;
+            document.getElementById('sys-cpu-load').innerText = data.system_stats.cpu_load + "%";
+            document.getElementById('sys-gpu-name').innerText = data.system_stats.gpu_name; // Bind GPU
+            document.getElementById('sys-ram-load').innerText = data.system_stats.ram_load + "%";
+            document.getElementById('sys-ram-detail').innerText = `(${data.system_stats.ram_display})`;
+        }
+
+        if (data.logs && data.logs.length > 0) {
+            // We only want to append NEW logs to avoid flickering or clearing local logs
+            // Ideally backend sends only new logs, but for now we can just check the last one?
+            // Simpler: Just refresh the bottom terminal completely from server state to match "Tail -f" behavior
+            // But KEEP the left terminal local-only or mixed?
+            // Let's make Bottom Terminal purely SERVER logs (System Output)
+
+            if (terminalLogsBottom) {
+                terminalLogsBottom.innerHTML = '';
+                data.logs.forEach(logMsg => {
+                    const entry = document.createElement('div');
+                    entry.className = 'log-entry';
+                    // Parse Timestamp [HH:MM:SS] using regex
+                    const timeRegex = /^(\[\d{2}:\d{2}:\d{2}\])\s*(.*)/;
+                    const match = logMsg.match(timeRegex);
+
+                    if (match) {
+                        const timePart = match[1];
+                        const msgPart = match[2];
+                        entry.innerHTML = `<span class="log-time">${timePart}</span> ${msgPart}`;
+                    } else {
+                        entry.innerText = logMsg;
+                    }
+                    terminalLogsBottom.appendChild(entry);
+                });
+                terminalLogsBottom.scrollTop = terminalLogsBottom.scrollHeight;
             }
         }
 
-        // 2. Update Logs
-        terminalLogs.innerHTML = '';
-        data.logs.forEach(log => {
-            const div = document.createElement('div');
-            div.className = 'log-entry';
-            div.textContent = log;
-            terminalLogs.appendChild(div);
-        });
 
-        // Auto-scroll logs
-        terminalLogs.scrollTop = terminalLogs.scrollHeight;
-
-    } catch (err) {
-        console.error("Failed to fetch updates:", err);
-    }
-}
-
-// Poll every 1 second
-setInterval(fetchUpdates, 1000);
-fetchUpdates(); // Initial call
-
-// --- Chat Logic ---
-
-async function sendMessage() {
-    const text = messageInput.value.trim();
-    if (!text) return;
-
-    // Reset input
-    messageInput.value = '';
-    messageInput.style.height = 'auto';
-
-    // 1. Add User Message
-    addMessage('user', text);
-
-    // 2. Add AI Placeholder
-    const aiMessageId = addMessage('ai', '');
-    const aiTextElement = document.getElementById(aiMessageId).querySelector('.text');
-    let aiResponse = "";
-
-    // 3. Fetch Stream
-    try {
-        const response = await fetch('/chat', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message: text })
-        });
-
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-
-        while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-
-            const chunk = decoder.decode(value);
-            aiResponse += chunk;
-
-            // Simple Markdown Image Renderer
-            // Regex detects ![Alt](/path/to/img) and converts to <img src="...">
-            const htmlResponse = aiResponse
-                .replace(/\n/g, '<br>')
-                .replace(/!\[(.*?)\]\((.*?)\)/g, '<img src="$2" alt="$1" class="chat-image">');
-
-            aiTextElement.innerHTML = htmlResponse;
-
-            // Auto scroll main chat
-            chatContainer.scrollTop = chatContainer.scrollHeight;
+        if (data.url_to_open) {
+            addLog(`[DEBUG] FE RECVD URL: ${data.url_to_open}`);
+            addLog(`OPENING INTERFACE: ${data.url_to_open}`);
+            const browserIframe = document.getElementById('browser-iframe');
+            const browserWindow = document.getElementById('browser-window');
+            if (browserIframe && browserWindow) {
+                browserIframe.src = data.url_to_open;
+                browserWindow.style.display = 'flex';
+            } else {
+                addLog("[ERR] Browser elements not found via ID!");
+            }
         }
 
-    } catch (err) {
-        aiTextElement.innerText = "Error: " + err.message;
+        if (data.image_to_show) {
+            addLog(`[VISUAL] Receiving Image Signal: ${data.image_to_show}`);
+            if (imagePopup && popupImg) {
+                popupImg.src = data.image_to_show;
+                imagePopup.style.display = 'flex';
+                addLog(`[VISUAL] Displaying Popup...`);
+            } else {
+                addLog(`[ERR] Image Popup Elements NOT FOUND!`);
+                console.error("Popup elements missing:", { imagePopup, popupImg });
+            }
+        }
+
+        // Update Voice Button
+        const micBtn = document.getElementById('mic-toggle-btn');
+        if (micBtn && data.voice_enabled !== undefined) {
+            if (data.voice_enabled) {
+                micBtn.innerText = "MIC: ON";
+                micBtn.classList.add("active");
+                micBtn.classList.remove("inactive");
+            } else {
+                micBtn.innerText = "MIC: OFF";
+                micBtn.classList.add("inactive");
+                micBtn.classList.remove("active");
+            }
+        }
+
+    } catch (e) {
+        console.error("Fetch Error:", e);
+        if (typeof addLog === "function") {
+            addLog(`SYS_ERR: Fetch failed - ${e}`);
+        }
     }
 }
 
-function addMessage(role, text) {
-    const id = 'msg-' + Date.now();
-    const div = document.createElement('div');
-    div.className = `message-row ${role}`;
-    div.id = id;
+async function toggleMic() {
+    try {
+        await fetch('/api/toggle_voice', { method: 'POST' });
+    } catch (e) {
+        addLog(`ERR: Toggle Mic failed - ${e}`);
+    }
+}
 
-    // Avatar
-    const avatar = role === 'user' ? 'U' : 'T';
+document.addEventListener('DOMContentLoaded', () => {
+    initVisualizer();
+    setInterval(fetchUpdates, 1000);
+});
 
-    div.innerHTML = `
-        <div class="message-content">
-            <div class="avatar ${role}">${avatar}</div>
-            <div class="text">${text}</div>
-        </div>
-    `;
+function updateClock() {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString();
+    const dateString = now.toLocaleDateString();
 
-    chatContainer.appendChild(div);
-    chatContainer.scrollTop = chatContainer.scrollHeight;
+    // Update new top bar clock
+    const sysTime = document.getElementById('sys-time');
+    if (sysTime) sysTime.innerText = timeString + " " + dateString;
+}
 
-    return id;
+setInterval(updateClock, 1000);
+updateClock();
+closeBrowserBtn.addEventListener('click', () => {
+    browserWindow.style.display = 'none';
+    browserIframe.src = '';
+});
+
+openExternalBtn.addEventListener('click', () => {
+    if (browserIframe.src) window.open(browserIframe.src, '_blank');
+});
+
+// Draggable Mini Browser
+function makeDraggable(el, handle) {
+    let x = 0, y = 0, nx = 0, ny = 0;
+    handle.onmousedown = (e) => {
+        e.preventDefault();
+        nx = e.clientX; ny = e.clientY;
+        document.onmouseup = () => { document.onmouseup = null; document.onmousemove = null; };
+        document.onmousemove = (e) => {
+            x = nx - e.clientX; y = ny - e.clientY;
+            nx = e.clientX; ny = e.clientY;
+            el.style.top = (el.offsetTop - y) + "px";
+            el.style.left = (el.offsetLeft - x) + "px";
+        };
+    };
+}
+makeDraggable(browserWindow, browserWindow.querySelector('.browser-header'));
+
+// Image Popup Events
+// v2.3 Updated
+if (closeImageBtn) {
+    closeImageBtn.addEventListener('click', () => {
+        imagePopup.style.display = 'none';
+        popupImg.src = '';
+    });
+}
+
+if (openImageBtn) {
+    openImageBtn.addEventListener('click', () => {
+        if (popupImg.src) window.open(popupImg.src, '_blank');
+    });
+}
+
+if (imagePopup) {
+    makeDraggable(imagePopup, imagePopup.querySelector('.browser-header'));
+}
+
+addLog("SYSTEM_BOOT: SUCCESSFUL");
+addLog(" Terry OS Mark II Initialized...");
+
+// --- CIRCULAR VISUALIZER GENERATION ---
+function initVisualizer() {
+    const visualizer = document.getElementById('voice-visualizer');
+    if (!visualizer) return;
+
+    const barCount = 40;
+    for (let i = 0; i < barCount; i++) {
+        const bar = document.createElement('div');
+        bar.className = 'visualizer-bar';
+
+        // Arrange in a circle
+        const rotation = (i / barCount) * 360;
+        bar.style.transform = `translate(-50%, -50%) rotate(${rotation}deg)`;
+
+        // Random animation delay and height variable for organic feel
+        const delay = Math.random() * 0.5;
+        const h = 25 + Math.random() * 25;
+        bar.style.animationDelay = `${delay}s`;
+        bar.style.setProperty('--h', `${h}px`);
+
+        visualizer.appendChild(bar);
+    }
 }

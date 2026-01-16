@@ -4,70 +4,197 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Terry AI</title>
-    <link rel="stylesheet" href="/static/style.css">
+    <title>JARVIS HUD - TERRY AI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css?v=2.3">
 </head>
 
 <body>
-    <div class="app-container">
-        <!-- Sidebar -->
-        <aside id="sidebar">
-            <div class="sidebar-header">
-                Settings
-            </div>
-            <div style="padding: 10px; border-bottom: 1px solid #333;">
-                <label for="model-select"
-                    style="display:block; font-size: 0.8rem; margin-bottom:5px; color:#aaa;">Perplexity Model:</label>
-                <select id="model-select"
-                    style="width:100%; background:#333; color:white; border:none; padding:5px; border-radius:4px;">
-                    <option value="sonar">Sonar (Default)</option>
-                    <option value="sonar-pro">Sonar Pro</option>
-                </select>
-            </div>
-            <div class="sidebar-header">
-                Terminal Info
-            </div>
-            <div id="terminal-logs">
-                <div class="log-entry">[System] Connecting...</div>
-            </div>
-        </aside>
-        <div id="resizer"></div>
+    <div class="hud-main">
+        <!-- Hidden status for JS compatibility -->
+        <span id="voice-status" style="display:none"></span>
 
-        <!-- Main Chat Area -->
-        <main id="main-area">
-            <header>
-                <div>Terry AI</div>
-                <div class="status-container">
-                    <span id="model-badge" class="badge">Model: Loading...</span>
-                    <span class="status-indicator">Online</span>
-                </div>
-            </header>
+        <div class="background-effects">
+            <div class="grid-3d"></div>
+            <div class="vignette"></div>
+            <div class="scanlines"></div>
+        </div>
 
-            <div id="chat-container">
-                <!-- Intro Message -->
-                <div class="message-row ai">
-                    <div class="message-content">
-                        <div class="avatar ai">T</div>
-                        <div class="text">Halo! Saya Terry. Ada yang bisa saya bantu?</div>
-                    </div>
+        <!-- ARC REACTOR CORE (TERRY AVATAR) -->
+        <div id="reactor-core" class="core-assembly idle">
+            <div class="reactor-wrap">
+                <div class="ring r1"></div>
+                <div class="ring r2"></div>
+                <div class="ring r3"></div>
+                <div class="ring r4"></div>
+                <div class="ring r5"></div>
+                <div class="energy-core"></div>
+                <div class="glow-pulse"></div>
+                <div id="voice-visualizer" class="circular-visualizer"></div>
+            </div>
+            <div class="core-label">TERRY_OS_MARK_II</div>
+        </div>
+
+        <!-- LEFT PANEL: LOGS -->
+        <div class="panel side-panel left-hud">
+            <div class="header-line">
+                <span class="tag">FLIGHT_DATA</span>
+                <span class="status-blink">REC</span>
+            </div>
+            <div id="terminal-logs" class="content-terminal"></div>
+            <div class="footer-line">STRM: ACTIVE // [SEC_ENCRYPTED]</div>
+        </div>
+
+        <!-- RIGHT PANEL: SYSTEM OUTPUT (Moved from Bottom) -->
+        <div id="bottom-terminal-panel" class="panel side-panel right-hud">
+            <div class="header-line">
+                <span class="tag">SYSTEM_OUTPUT</span>
+                <span class="status-blink">LIVE</span>
+            </div>
+            <div id="terminal-logs-bottom" class="content-terminal"></div>
+        </div>
+
+        <!-- CENTER PANEL: INTERFACE (Moved from Right) -->
+        <div class="panel center-hud">
+            <div class="header-line">
+                <span class="tag">USER_INTERFACE</span>
+                <div class="controls-group">
+                    <button id="mic-toggle-btn" class="mic-btn" onclick="toggleMic()">MIC: ON</button>
+                    <select id="brain-select" class="brain-dropdown" onchange="changeBrainMode()">
+                        <option value="auto" selected>🤖 TERRY (AUTO)</option>
+                        <option value="Gemini">✨ Gemini</option>
+                        <option value="Perplexity">🧠 Perplexity</option>
+                        <option value="DeepSeek">🐋 DeepSeek</option>
+                        <option value="Groq">🦙 Groq</option>
+                        <option value="OpenRouter">☁️ OpenRouter</option>
+                        <option value="Ollama">🏠 Ollama</option>
+                    </select>
+                    <select id="or-model-select" class="brain-dropdown"
+                        style="display:none; font-size: 0.7rem; color: #fff;" onchange="changeORModel()">
+                        <option value="google/gemini-2.0-flash-exp:free">Gemini 2.0 Flash</option>
+                        <option value="google/gemini-2.0-flash-thinking-exp:free">Gemini 2.0 Think</option>
+                        <option value="deepseek/deepseek-r1:free">DeepSeek R1</option>
+                        <option value="meta-llama/llama-3.3-70b-instruct:free">Llama 3.3 70B</option>
+                        <option value="mistralai/mistral-7b-instruct:free">Mistral 7B</option>
+                    </select>
                 </div>
             </div>
-
-            <div id="input-area">
-                <div id="input-box-container">
-                    <textarea id="message-input" rows="1" placeholder="Ketik pesan ke Terry..."></textarea>
-                    <button id="send-btn">
-                        <!-- SVG Icon Send -->
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M2.01 21L23 12L2.01 3L2 10L17 12L2 14L2.01 21Z" fill="currentColor" />
-                        </svg>
-                    </button>
+            <div id="chat-container" class="content-chat">
+                <div class="msg ai-msg">
+                    <span class="prefix">TERRY:</span>
+                    <span class="text">System fully operational. Ready for commands.</span>
                 </div>
             </div>
-        </main>
+            <div class="input-area">
+                <div class="input-glow"></div>
+                <textarea id="message-input" placeholder=">> INPUT COMMAND..."></textarea>
+                <div class="btn-group">
+                    <button id="send-btn">INITIATE</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- HUD DECOR -->
+        <div class="corner-asset tl"></div>
+        <div class="corner-asset tr"></div>
+        <div class="corner-asset bl"></div>
+        <div class="corner-asset br"></div>
     </div>
 
-    <script src="/static/script.js"></script>
+    <!-- TOP SYSTEM BAR -->
+    <div class="top-info-bar">
+        <div class="sys-item">
+            <span class="label">OS:</span>
+            <span id="sys-os" class="value">DETECTING...</span>
+        </div>
+        <div class="sys-item">
+            <span class="label">CPU:</span>
+            <span id="sys-cpu-model" class="value">SCANNING...</span>
+        </div>
+        <div class="sys-item">
+            <span class="label">CPU LOAD:</span>
+            <span id="sys-cpu-load" class="value">0%</span>
+        </div>
+        <div class="sys-item">
+            <span class="label">VGA:</span>
+            <span id="sys-gpu-name" class="value">DETECTING...</span>
+        </div>
+        <div class="sys-item">
+            <span class="label">RAM:</span>
+            <span id="sys-ram-load" class="value">0%</span>
+            <span id="sys-ram-detail" class="detail">(0/0)</span>
+        </div>
+        <div class="sys-item right-align">
+            <span class="label">TIME:</span>
+            <span id="sys-time" class="value clock-text">00:00:00</span>
+        </div>
+    </div>
+
+    <!-- MINI BROWSER FOR YOUTUBE/WEB -->
+    <div id="browser-window" class="mini-browser">
+        <div class="browser-header">
+            <span class="title">SECURE_LINK_VISUALIZER // TERRY_BROWSER</span>
+            <div class="controls">
+                <button id="open-external-btn">↗ EXT</button>
+                <button id="close-browser-btn">✖ CLOSE</button>
+            </div>
+        </div>
+        <div class="browser-body">
+            <iframe id="browser-iframe" src="" title="YouTube video player" frameborder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowfullscreen>
+            </iframe>
+        </div>
+    </div>
+
+    <!-- IMAGE POPUP (NEW) -->
+    <div id="image-popup" class="mini-browser" style="display:none; width: 512px; height: 550px;">
+        <div class="browser-header">
+            <span class="title">VISUAL_GENERATOR // POLLINATIONS_AI</span>
+            <div class="controls">
+                <button id="open-image-btn">↗ OPEN</button>
+                <button id="close-image-btn">✖ CLOSE</button>
+            </div>
+        </div>
+        <div class="browser-body"
+            style="background: #000; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+            <img id="popup-img" src="" style="width: 100%; height: 100%; object-fit: contain;">
+        </div>
+    </div>
+
+    <script src="/static/script.js?v=2.2"></script>
+    <script>
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('sys-time').innerText = now.toLocaleTimeString();
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        async function changeBrainMode() {
+            const select = document.getElementById('brain-select');
+            const value = select.value;
+            let mode = (value === "auto") ? "auto" : "manual";
+            let provider = (value === "auto") ? null : value;
+
+            try {
+                const response = await fetch('/api/set_brain', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ mode: mode, provider: provider })
+                });
+
+                if (typeof addLog === "function") {
+                    addLog(`SYSTEM_CONFIG: Brain switched to ${mode === 'manual' ? provider.toUpperCase() : 'AUTO MODE'}`);
+                }
+            } catch (err) {
+                if (typeof addLog === "function") {
+                    addLog(`SYSTEM_ERROR: Failed to switch brain. ${err}`);
+                }
+            }
+        }
+    </script>
 </body>
 
 </html>
