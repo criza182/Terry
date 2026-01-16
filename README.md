@@ -14,10 +14,10 @@ Terry adalah asisten AI berbasis suara dan teks yang dirancang untuk Windows dan
 ## ✨ Fitur Utama
 
 - 🎤 **Voice Assistant**: Speech recognition dan text-to-speech dalam Bahasa Indonesia
-- 🧠 **Multi-Provider AI**: Gemini, Perplexity, DeepSeek, Groq, Ollama dengan fallback otomatis
+- 🧠 **Auto-Update Brain**: Otomatis mendeteksi model terbaru dari Gemini, OpenRouter, Groq, dan Ollama
 - ⚡ **Local Actions**: Aksi cepat tanpa AI (buka app, YouTube, waktu, volume, media control)
 - 🌐 **Internet Search**: Pencarian informasi via DuckDuckGo
-- 🎨 **Image Generation**: Generate gambar dari teks
+- 🎨 **Image Popup**: Generate gambar dari teks dan tampilkan di overlay popup instan
 - 📸 **Web Screenshot**: Capture layar website
 - 💻 **Web Dashboard**: Interface web real-time di port 8000
 - 💾 **Memory & Context**: Menyimpan riwayat percakapan untuk konteks
@@ -222,6 +222,12 @@ Terry akan merespons jika perintah mengandung kata-kata berikut:
 "Buka CasaOS"
 "Buka dashboard server"
 "Screenshot google.com"
+```
+
+#### **Image Popup (Baru)**
+```
+"Buat gambar pemandangan kota futuristik"
+(Gambar akan muncul otomatis di layar dalam popup yang bisa digeser)
 ```
 
 ### **Web Dashboard**
