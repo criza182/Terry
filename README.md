@@ -159,11 +159,11 @@ HF_TOKEN=your_huggingface_token
 ```bash
 # Windows
 venv\Scripts\activate
-python main.py
+python app_standalone.py
 
 # Linux
 source venv/bin/activate
-python main.py
+python app_standalone.py
 ```
 
 ### **Interface**
